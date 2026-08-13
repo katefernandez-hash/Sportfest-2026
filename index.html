@@ -139,6 +139,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         /* --- FORM STYLES --- */
@@ -202,10 +204,49 @@
         }
 
         /* --- ADMIN DASHBOARD --- */
+        .admin-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+            flex-wrap: wrap;
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .filter-group label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #374151;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .filter-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            outline: none;
+            background-color: #f9fafb;
+        }
+
         .stats-summary {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
             margin-bottom: 25px;
         }
 
@@ -213,18 +254,25 @@
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 10px;
-            padding: 15px;
+            padding: 12px 8px;
             text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
         .stat-card .number {
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: 800;
             color: var(--primary-green);
         }
 
         .stat-card .label {
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             color: #64748b;
             text-transform: uppercase;
             font-weight: 600;
@@ -271,13 +319,17 @@
         .badge-basketball { background-color: #ffedd5; color: #c2410c; }
         .badge-volleyball { background-color: #dbeafe; color: #1e40af; }
         .badge-badminton { background-color: #dcfce7; color: #15803d; }
+        .badge-chess { background-color: #f3e8ff; color: #6b21a8; }
+        .badge-mlbb { background-color: #fae8ff; color: #86198f; }
+        .badge-table-tennis { background-color: #e0e7ff; color: #3730a3; }
+        .badge-sepak-takraw { background-color: #fef3c7; color: #92400e; }
 
         .clear-btn {
             background: var(--danger-red);
             color: white;
             border: none;
-            padding: 6px 12px;
-            font-size: 0.75rem;
+            padding: 8px 14px;
+            font-size: 0.8rem;
             font-weight: 700;
             border-radius: 6px;
             cursor: pointer;
@@ -441,9 +493,19 @@
                             <label for="category">Sports Category</label>
                             <select id="category" required>
                                 <option value="">-- Select Category --</option>
-                                <option value="Basketball">Basketball</option>
-                                <option value="Volleyball">Volleyball</option>
-                                <option value="Badminton">Badminton</option>
+                                <option value="Volleyball Men">Volleyball Men</option>
+                                <option value="Volleyball Women">Volleyball Women</option>
+                                <option value="Basketball Men">Basketball Men</option>
+                                <option value="Basketball Women">Basketball Women</option>
+                                <option value="Chess Men">Chess Men</option>
+                                <option value="Chess Women">Chess Women</option>
+                                <option value="MLBB Men">MLBB Men</option>
+                                <option value="MLBB Women">MLBB Women</option>
+                                <option value="Table Tennis Men">Table Tennis Men</option>
+                                <option value="Table Tennis Women">Table Tennis Women</option>
+                                <option value="Sepak Takraw Men">Sepak Takraw Men</option>
+                                <option value="Badminton Men">Badminton Men</option>
+                                <option value="Badminton Women">Badminton Women</option>
                             </select>
                         </div>
 
@@ -456,26 +518,89 @@
             <div id="admin-side" class="tab-content">
                 <div class="section-title">
                     Registered Athletes Directory
+                </div>
+
+                <!-- CONTROLS & FILTER -->
+                <div class="admin-controls">
+                    <div class="filter-group">
+                        <label for="adminFilter">Filter Category:</label>
+                        <select id="adminFilter" onchange="renderAdminTable()">
+                            <option value="ALL">-- All Categories --</option>
+                            <option value="Volleyball Men">Volleyball Men</option>
+                            <option value="Volleyball Women">Volleyball Women</option>
+                            <option value="Basketball Men">Basketball Men</option>
+                            <option value="Basketball Women">Basketball Women</option>
+                            <option value="Chess Men">Chess Men</option>
+                            <option value="Chess Women">Chess Women</option>
+                            <option value="MLBB Men">MLBB Men</option>
+                            <option value="MLBB Women">MLBB Women</option>
+                            <option value="Table Tennis Men">Table Tennis Men</option>
+                            <option value="Table Tennis Women">Table Tennis Women</option>
+                            <option value="Sepak Takraw Men">Sepak Takraw Men</option>
+                            <option value="Badminton Men">Badminton Men</option>
+                            <option value="Badminton Women">Badminton Women</option>
+                        </select>
+                    </div>
                     <button class="clear-btn" onclick="promptClearDatabase()">Clear All Data</button>
                 </div>
 
                 <!-- STATS OVERVIEW -->
                 <div class="stats-summary">
-                    <div class="stat-card">
+                    <div class="stat-card" onclick="setFilter('ALL')">
                         <div class="number" id="stat-total">0</div>
-                        <div class="label">Total Athletes</div>
+                        <div class="label">Total</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="number" id="stat-basketball">0</div>
-                        <div class="label">Basketball</div>
+                    <div class="stat-card" onclick="setFilter('Volleyball Men')">
+                        <div class="number" id="stat-volleyball-men">0</div>
+                        <div class="label">VB Men</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="number" id="stat-volleyball">0</div>
-                        <div class="label">Volleyball</div>
+                    <div class="stat-card" onclick="setFilter('Volleyball Women')">
+                        <div class="number" id="stat-volleyball-women">0</div>
+                        <div class="label">VB Women</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="number" id="stat-badminton">0</div>
-                        <div class="label">Badminton</div>
+                    <div class="stat-card" onclick="setFilter('Basketball Men')">
+                        <div class="number" id="stat-basketball-men">0</div>
+                        <div class="label">BB Men</div>
+                    </div>
+                    <div class="stat-card" onclick="setFilter('Basketball Women')">
+                        <div class="number" id="stat-basketball-women">0</div>
+                        <div class="label">BB Women</div>
+                    </div>
+                    <div class="stat-card" onclick="setFilter('Chess Men')">
+                        <div class="number" id="stat-chess-men">0</div>
+                        <div class="label">Chess M</div>
+                    </div>
+                    <div class="stat-card" onclick="setFilter('Chess Women')">
+                        <div class="number" id="stat-chess-women">0</div>
+                        <div class="label">Chess W</div>
+                    </div>
+                    <div class="stat-card" onclick="setFilter('MLBB Men')">
+                        <div class="number" id="stat-mlbb-men">0</div>
+                        <div class="label">MLBB M</div>
+                    </div>
+                    <div class="stat-card" onclick="setFilter('MLBB Women')">
+                        <div class="number" id="stat-mlbb-women">0</div>
+                        <div class="label">MLBB W</div>
+                    </div>
+                    <div class="stat-card" onclick="setFilter('Table Tennis Men')">
+                        <div class="number" id="stat-tt-men">0</div>
+                        <div class="label">TT Men</div>
+                    </div>
+                    <div class="stat-card" onclick="setFilter('Table Tennis Women')">
+                        <div class="number" id="stat-tt-women">0</div>
+                        <div class="label">TT Women</div>
+                    </div>
+                    <div class="stat-card" onclick="setFilter('Sepak Takraw Men')">
+                        <div class="number" id="stat-sepak">0</div>
+                        <div class="label">Sepak</div>
+                    </div>
+                    <div class="stat-card" onclick="setFilter('Badminton Men')">
+                        <div class="number" id="stat-badminton-men">0</div>
+                        <div class="label">Badm. M</div>
+                    </div>
+                    <div class="stat-card" onclick="setFilter('Badminton Women')">
+                        <div class="number" id="stat-badminton-women">0</div>
+                        <div class="label">Badm. W</div>
                     </div>
                 </div>
 
@@ -525,8 +650,6 @@
     <!-- JAVASCRIPT LOGIC WITH SUPABASE PERSISTENCE -->
     <script>
         // ====== SUPABASE CONFIG ======
-        // Replace these two values with the ones from
-        // Supabase Dashboard -> Project Settings -> API
         const SUPABASE_URL = "https://vswauahalnjzaapiwauj.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_CoafTkQnSblcW60OzW9Azw_gZQig3TZ";
 
@@ -598,7 +721,7 @@
             }
         }
 
-        // --- ATHLETE REGISTRATION & POPUP (now writes to Supabase) ---
+        // --- ATHLETE REGISTRATION & POPUP ---
         async function handleRegistration(event) {
             event.preventDefault();
 
@@ -692,8 +815,6 @@
         }
 
         async function confirmClearDatabase() {
-            // Deletes every row. neq on a value that never matches is the
-            // standard Supabase trick for an unconditional delete-all.
             const { error } = await supabaseClient
                 .from(TABLE_NAME)
                 .delete()
@@ -710,9 +831,16 @@
             renderAdminTable();
         }
 
-        // --- RENDER TABLE AND DASHBOARD STATS (now reads from Supabase) ---
+        // --- QUICK FILTER BY STAT CARD CLICK ---
+        function setFilter(categoryName) {
+            document.getElementById('adminFilter').value = categoryName;
+            renderAdminTable();
+        }
+
+        // --- RENDER TABLE AND DASHBOARD STATS WITH FILTER ---
         async function renderAdminTable() {
             const tbody = document.getElementById('athlete-table-body');
+            const selectedFilter = document.getElementById('adminFilter').value;
             tbody.innerHTML = `<tr class="loading-row"><td colspan="5">Loading athletes...</td></tr>`;
 
             const { data: athletes, error } = await supabaseClient
@@ -727,19 +855,46 @@
             }
 
             tbody.innerHTML = '';
-            let counts = { Basketball: 0, Volleyball: 0, Badminton: 0 };
+            
+            let counts = {
+                "Volleyball Men": 0,
+                "Volleyball Women": 0,
+                "Basketball Men": 0,
+                "Basketball Women": 0,
+                "Chess Men": 0,
+                "Chess Women": 0,
+                "MLBB Men": 0,
+                "MLBB Women": 0,
+                "Table Tennis Men": 0,
+                "Table Tennis Women": 0,
+                "Sepak Takraw Men": 0,
+                "Badminton Men": 0,
+                "Badminton Women": 0
+            };
 
-            if (athletes.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:30px;">No registered athletes found in database.</td></tr>`;
+            // Calculate Counts
+            athletes.forEach(athlete => {
+                if (counts[athlete.category] !== undefined) {
+                    counts[athlete.category]++;
+                }
+            });
+
+            // Filter athletes according to dropdown selection
+            const filteredAthletes = selectedFilter === 'ALL' 
+                ? athletes 
+                : athletes.filter(a => a.category === selectedFilter);
+
+            if (filteredAthletes.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:30px;">No registered athletes found for selected category.</td></tr>`;
             } else {
-                athletes.forEach((athlete, index) => {
-                    if (counts[athlete.category] !== undefined) {
-                        counts[athlete.category]++;
-                    }
-
+                filteredAthletes.forEach((athlete, index) => {
                     let badgeClass = 'badge-basketball';
-                    if (athlete.category === 'Volleyball') badgeClass = 'badge-volleyball';
-                    if (athlete.category === 'Badminton') badgeClass = 'badge-badminton';
+                    if (athlete.category.includes('Volleyball')) badgeClass = 'badge-volleyball';
+                    if (athlete.category.includes('Badminton')) badgeClass = 'badge-badminton';
+                    if (athlete.category.includes('Chess')) badgeClass = 'badge-chess';
+                    if (athlete.category.includes('MLBB')) badgeClass = 'badge-mlbb';
+                    if (athlete.category.includes('Table Tennis')) badgeClass = 'badge-table-tennis';
+                    if (athlete.category.includes('Sepak Takraw')) badgeClass = 'badge-sepak-takraw';
 
                     const row = document.createElement('tr');
                     row.innerHTML = `
@@ -755,10 +910,21 @@
                 });
             }
 
+            // Update Statistics Counter Cards
             document.getElementById('stat-total').innerText = athletes.length;
-            document.getElementById('stat-basketball').innerText = counts.Basketball;
-            document.getElementById('stat-volleyball').innerText = counts.Volleyball;
-            document.getElementById('stat-badminton').innerText = counts.Badminton;
+            document.getElementById('stat-volleyball-men').innerText = counts["Volleyball Men"];
+            document.getElementById('stat-volleyball-women').innerText = counts["Volleyball Women"];
+            document.getElementById('stat-basketball-men').innerText = counts["Basketball Men"];
+            document.getElementById('stat-basketball-women').innerText = counts["Basketball Women"];
+            document.getElementById('stat-chess-men').innerText = counts["Chess Men"];
+            document.getElementById('stat-chess-women').innerText = counts["Chess Women"];
+            document.getElementById('stat-mlbb-men').innerText = counts["MLBB Men"];
+            document.getElementById('stat-mlbb-women').innerText = counts["MLBB Women"];
+            document.getElementById('stat-tt-men').innerText = counts["Table Tennis Men"];
+            document.getElementById('stat-tt-women').innerText = counts["Table Tennis Women"];
+            document.getElementById('stat-sepak').innerText = counts["Sepak Takraw Men"];
+            document.getElementById('stat-badminton-men').innerText = counts["Badminton Men"];
+            document.getElementById('stat-badminton-women').innerText = counts["Badminton Women"];
         }
 
         // --- GENERAL MODAL HELPER FUNCTIONS ---
