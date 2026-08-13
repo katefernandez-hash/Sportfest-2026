@@ -196,6 +196,11 @@
             background: var(--dark-green);
         }
 
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         /* --- ADMIN DASHBOARD --- */
         .stats-summary {
             display: grid;
@@ -376,6 +381,12 @@
             padding: 20px;
             border-top: 1px solid var(--border-color);
         }
+
+        .loading-row td {
+            text-align: center;
+            color: #94a3b8;
+            padding: 30px;
+        }
     </style>
 </head>
 <body>
@@ -436,7 +447,7 @@
                             </select>
                         </div>
 
-                        <button type="submit" class="btn-primary">Submit Registration</button>
+                        <button type="submit" class="btn-primary" id="submitBtn">Submit Registration</button>
                     </form>
                 </div>
             </div>
@@ -508,20 +519,22 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC WITH SESSION PERSISTENCE -->
+    <!-- SUPABASE CLIENT LIBRARY -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- JAVASCRIPT LOGIC WITH SUPABASE PERSISTENCE -->
     <script>
-        const DB_KEY = 'cpsu_sportsfest_2026_db';
+        // ====== SUPABASE CONFIG ======
+        // Replace these two values with the ones from
+        // Supabase Dashboard -> Project Settings -> API
+        const SUPABASE_URL = "https://vswauahalnjzaapiwauj.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_CoafTkQnSblcW60OzW9Azw_gZQig3TZ";
+
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const TABLE_NAME = "athletes";
+
         const ADMIN_PASSWORD = "cpsump@2026";
         let pendingDeleteId = null;
-
-        function getDatabase() {
-            const data = localStorage.getItem(DB_KEY);
-            return data ? JSON.parse(data) : [];
-        }
-
-        function saveDatabase(data) {
-            localStorage.setItem(DB_KEY, JSON.stringify(data));
-        }
 
         // On initial load: restore saved active tab & authentication state from sessionStorage
         window.addEventListener('DOMContentLoaded', () => {
@@ -545,7 +558,6 @@
                 }
             }
 
-            // Save active tab state in browser session
             sessionStorage.setItem('activeTab', tab);
 
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -586,29 +598,48 @@
             }
         }
 
-        // --- ATHLETE REGISTRATION & POPUP ---
-        function handleRegistration(event) {
+        // --- ATHLETE REGISTRATION & POPUP (now writes to Supabase) ---
+        async function handleRegistration(event) {
             event.preventDefault();
 
             const name = document.getElementById('fullName').value.trim();
             const dept = document.getElementById('deptSection').value.trim();
             const category = document.getElementById('category').value;
+            const submitBtn = document.getElementById('submitBtn');
 
-            if (name && dept && category) {
-                const athletes = getDatabase();
-                athletes.push({ id: Date.now(), name, dept, category });
-                saveDatabase(athletes);
+            if (!(name && dept && category)) return;
 
-                document.getElementById('registrationForm').reset();
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Submitting...";
 
+            const { error } = await supabaseClient
+                .from(TABLE_NAME)
+                .insert([{ full_name: name, dept_section: dept, category: category }]);
+
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Submit Registration";
+
+            if (error) {
+                console.error(error);
                 openModal({
-                    icon: '✓',
-                    iconClass: 'icon-success',
-                    title: 'Registration Successful!',
-                    message: `Thank you, <strong>${escapeHtml(name)}</strong>!<br>Your registration for <strong>${escapeHtml(category)}</strong> has been saved.`,
-                    actionsHTML: '<button class="btn-modal btn-confirm-green" onclick="closeModal()">Done</button>'
+                    icon: '⚠️',
+                    iconClass: 'icon-danger',
+                    title: 'Registration Failed',
+                    message: `Something went wrong saving your registration.<br><small>${escapeHtml(error.message)}</small>`,
+                    actionsHTML: '<button class="btn-modal btn-cancel" onclick="closeModal()">Close</button>'
                 });
+                return;
             }
+
+            document.getElementById('registrationForm').reset();
+
+            openModal({
+                icon: '✓',
+                iconClass: 'icon-success',
+                title: 'Registration Successful!',
+                message: `Thank you, <strong>${escapeHtml(name)}</strong>!<br>Your registration for <strong>${escapeHtml(category)}</strong> has been saved.`,
+                actionsHTML: '<button class="btn-modal btn-confirm-green" onclick="closeModal()">Done</button>'
+            });
         }
 
         // --- DELETE INDIVIDUAL RECORD POPUP ---
@@ -626,15 +657,24 @@
             });
         }
 
-        function confirmDeleteAthlete() {
-            if (pendingDeleteId) {
-                let athletes = getDatabase();
-                athletes = athletes.filter(a => a.id !== pendingDeleteId);
-                saveDatabase(athletes);
-                pendingDeleteId = null;
-                closeModal();
-                renderAdminTable();
+        async function confirmDeleteAthlete() {
+            if (!pendingDeleteId) return;
+
+            const { error } = await supabaseClient
+                .from(TABLE_NAME)
+                .delete()
+                .eq('id', pendingDeleteId);
+
+            pendingDeleteId = null;
+            closeModal();
+
+            if (error) {
+                console.error(error);
+                alert("Could not delete record: " + error.message);
+                return;
             }
+
+            renderAdminTable();
         }
 
         // --- CLEAR ALL DATA POPUP ---
@@ -651,18 +691,42 @@
             });
         }
 
-        function confirmClearDatabase() {
-            localStorage.removeItem(DB_KEY);
+        async function confirmClearDatabase() {
+            // Deletes every row. neq on a value that never matches is the
+            // standard Supabase trick for an unconditional delete-all.
+            const { error } = await supabaseClient
+                .from(TABLE_NAME)
+                .delete()
+                .neq('id', '00000000-0000-0000-0000-000000000000');
+
             closeModal();
+
+            if (error) {
+                console.error(error);
+                alert("Could not clear database: " + error.message);
+                return;
+            }
+
             renderAdminTable();
         }
 
-        // --- RENDER TABLE AND DASHBOARD STATS ---
-        function renderAdminTable() {
+        // --- RENDER TABLE AND DASHBOARD STATS (now reads from Supabase) ---
+        async function renderAdminTable() {
             const tbody = document.getElementById('athlete-table-body');
-            tbody.innerHTML = '';
+            tbody.innerHTML = `<tr class="loading-row"><td colspan="5">Loading athletes...</td></tr>`;
 
-            const athletes = getDatabase();
+            const { data: athletes, error } = await supabaseClient
+                .from(TABLE_NAME)
+                .select('*')
+                .order('created_at', { ascending: true });
+
+            if (error) {
+                console.error(error);
+                tbody.innerHTML = `<tr class="loading-row"><td colspan="5">Failed to load data: ${escapeHtml(error.message)}</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
             let counts = { Basketball: 0, Volleyball: 0, Badminton: 0 };
 
             if (athletes.length === 0) {
@@ -674,17 +738,17 @@
                     }
 
                     let badgeClass = 'badge-basketball';
-                    if(athlete.category === 'Volleyball') badgeClass = 'badge-volleyball';
-                    if(athlete.category === 'Badminton') badgeClass = 'badge-badminton';
+                    if (athlete.category === 'Volleyball') badgeClass = 'badge-volleyball';
+                    if (athlete.category === 'Badminton') badgeClass = 'badge-badminton';
 
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${index + 1}</td>
-                        <td><strong>${escapeHtml(athlete.name)}</strong></td>
-                        <td>${escapeHtml(athlete.dept)}</td>
+                        <td><strong>${escapeHtml(athlete.full_name)}</strong></td>
+                        <td>${escapeHtml(athlete.dept_section)}</td>
                         <td><span class="badge ${badgeClass}">${athlete.category}</span></td>
                         <td>
-                            <button onclick="promptDeleteAthlete(${athlete.id}, '${escapeHtml(athlete.name)}')" style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-size:1.1rem;" title="Delete Record">🗑️</button>
+                            <button onclick="promptDeleteAthlete('${athlete.id}', '${escapeHtml(athlete.full_name)}')" style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-size:1.1rem;" title="Delete Record">🗑️</button>
                         </td>
                     `;
                     tbody.appendChild(row);
@@ -716,7 +780,7 @@
         }
 
         function escapeHtml(text) {
-            return text
+            return String(text)
                 .replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;")
