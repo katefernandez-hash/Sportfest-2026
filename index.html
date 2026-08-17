@@ -318,7 +318,7 @@
 
         .badge-basketball { background-color: #ffedd5; color: #c2410c; }
         .badge-volleyball { background-color: #dbeafe; color: #1e40af; }
-        .badge-badminton { background-color: #dcfce7; color: #15803d; }
+        .badge-football { background-color: #dcfce7; color: #15803d; }
         .badge-chess { background-color: #f3e8ff; color: #6b21a8; }
         .badge-mlbb { background-color: #fae8ff; color: #86198f; }
         .badge-table-tennis { background-color: #e0e7ff; color: #3730a3; }
@@ -504,8 +504,7 @@
                                 <option value="Table Tennis Men">Table Tennis Men</option>
                                 <option value="Table Tennis Women">Table Tennis Women</option>
                                 <option value="Sepak Takraw Men">Sepak Takraw Men</option>
-                                <option value="Badminton Men">Badminton Men</option>
-                                <option value="Badminton Women">Badminton Women</option>
+                                <option value="Football Men">Football Men</option>
                             </select>
                         </div>
 
@@ -537,8 +536,7 @@
                             <option value="Table Tennis Men">Table Tennis Men</option>
                             <option value="Table Tennis Women">Table Tennis Women</option>
                             <option value="Sepak Takraw Men">Sepak Takraw Men</option>
-                            <option value="Badminton Men">Badminton Men</option>
-                            <option value="Badminton Women">Badminton Women</option>
+                            <option value="Football Men">Football Men</option>
                         </select>
                     </div>
                     <button class="clear-btn" onclick="promptClearDatabase()">Clear All Data</button>
@@ -594,13 +592,9 @@
                         <div class="number" id="stat-sepak">0</div>
                         <div class="label">Sepak</div>
                     </div>
-                    <div class="stat-card" onclick="setFilter('Badminton Men')">
-                        <div class="number" id="stat-badminton-men">0</div>
-                        <div class="label">Badm. M</div>
-                    </div>
-                    <div class="stat-card" onclick="setFilter('Badminton Women')">
-                        <div class="number" id="stat-badminton-women">0</div>
-                        <div class="label">Badm. W</div>
+                    <div class="stat-card" onclick="setFilter('Football Men')">
+                        <div class="number" id="stat-football-men">0</div>
+                        <div class="label">FB Men</div>
                     </div>
                 </div>
 
@@ -868,8 +862,7 @@
                 "Table Tennis Men": 0,
                 "Table Tennis Women": 0,
                 "Sepak Takraw Men": 0,
-                "Badminton Men": 0,
-                "Badminton Women": 0
+                "Football Men": 0
             };
 
             // Calculate Counts
@@ -890,7 +883,7 @@
                 filteredAthletes.forEach((athlete, index) => {
                     let badgeClass = 'badge-basketball';
                     if (athlete.category.includes('Volleyball')) badgeClass = 'badge-volleyball';
-                    if (athlete.category.includes('Badminton')) badgeClass = 'badge-badminton';
+                    if (athlete.category.includes('Football')) badgeClass = 'badge-football';
                     if (athlete.category.includes('Chess')) badgeClass = 'badge-chess';
                     if (athlete.category.includes('MLBB')) badgeClass = 'badge-mlbb';
                     if (athlete.category.includes('Table Tennis')) badgeClass = 'badge-table-tennis';
@@ -923,8 +916,7 @@
             document.getElementById('stat-tt-men').innerText = counts["Table Tennis Men"];
             document.getElementById('stat-tt-women').innerText = counts["Table Tennis Women"];
             document.getElementById('stat-sepak').innerText = counts["Sepak Takraw Men"];
-            document.getElementById('stat-badminton-men').innerText = counts["Badminton Men"];
-            document.getElementById('stat-badminton-women').innerText = counts["Badminton Women"];
+            document.getElementById('stat-football-men').innerText = counts["Football Men"];
         }
 
         // --- GENERAL MODAL HELPER FUNCTIONS ---
